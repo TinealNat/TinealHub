@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TINEAL HUB - Checkout</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .checkout-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .checkout-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .checkout-header h1 {
+            color: #1a1a2e;
+            margin-bottom: 0.25rem;
+        }
+        .checkout-header p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .order-id-input {
+            margin-bottom: 1.5rem;
+        }
+        .order-id-input label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        .order-id-input input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        .order-id-input input:focus {
+            outline: none;
+            border-color: #1a1a2e;
+        }
+        .fetch-btn {
+            width: 100%;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .order-summary {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            display: none;
+        }
+        .order-summary h3 {
+            margin-bottom: 1rem;
+            color: #1a1a2e;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .price-large {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        .pay-btn {
+            width: 100%;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .pay-btn:hover {
+            background: #059669;
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #666;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .back-link:hover {
+            color: #1a1a2e;
+        }
+        .info-note {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="logo.png" alt="TINEAL HUB" class="logo-img" onerror="this.src='https://placehold.co/45x45/1a1a2e/white?text=TH'">
+            <div class="logo-text">
+                TINEAL HUB
+                <span>CREATIVE TECH + CONNECTIVITY</span>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="shop.html">Services</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="admin-login.html">Admin</a></li>
+            <li><a href="track.html">Track Order</a></li>
+            <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="checkout-container">
+            <div class="checkout-header">
+                <h1>Complete Your Payment</h1>
+                <p>Enter your Order ID to proceed</p>
+            </div>
+
+            <div class="order-id-input">
+                <label>Order ID</label>
+                <input type="text" id="orderIdInput" placeholder="Example: REQ1734567890123">
+                <button class="fetch-btn" onclick="fetchOrder()">Load Order</button>
+            </div>
+
+            <div id="orderSummary" class="order-summary"></div>
+            <div id="errorContainer"></div>
+
+            <div class="info-note">
+                Didn't receive an SMS? Enter the Order ID you received via email or from the admin. If you don't have an Order ID, please <a href="shop.html" style="color: #3730a3;">request a quote</a> first.
+            </div>
+
+            <a href="track.html" class="back-link">← Track Your Order Status</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2025 TINEAL HUB | Creative Tech + Connectivity</p>
+    </footer>
+
+    <script>
+        let currentOrder = null;
+
+        // Check URL for order ID parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdFromUrl = urlParams.get('id');
+        if (orderIdFromUrl) {
+            document.getElementById('orderIdInput').value = orderIdFromUrl;
+            fetchOrder();
+        }
+
+        async function fetchOrder() {
+            const orderId = document.getElementById('orderIdInput').value.trim();
+            const errorDiv = document.getElementById('errorContainer');
+            const summaryDiv = document.getElementById('orderSummary');
+            
+            if (!orderId) {
+                errorDiv.innerHTML = '<div class="error-message">Please enter an Order ID</div>';
+                summaryDiv.style.display = 'none';
+                return;
+            }
+
+            errorDiv.innerHTML = '';
+            summaryDiv.style.display = 'block';
+            summaryDiv.innerHTML = '<div class="loading">Loading order details...</div>';
+
+            try {
+                const response = await fetch(`/api/order/${orderId}`);
+                
+                if (response.status === 404) {
+                    summaryDiv.innerHTML = '';
+                    errorDiv.innerHTML = '<div class="error-message">Order not found. Please check the Order ID and try again.</div>';
+                    summaryDiv.style.display = 'none';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const order = await response.json();
+                currentOrder = order;
+
+                // Check if order is in a payable state
+                if (order.status !== 'quoted' && order.status !== 'pending_payment') {
+                    summaryDiv.innerHTML = `
+                        <div class="error-message">
+                            This order is not ready for payment.<br>
+                            Current status: ${formatStatus(order.status)}<br>
+                            <a href="track.html?id=${order.id}" style="color: #1a1a2e;">Track Order →</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Check if quotedPrice exists
+                const price = order.quotedPrice || order.amount;
+                if (!price) {
+                    summaryDiv.innerHTML = `
+                        <div class="error-message">
+                            No price has been set for this order yet.<br>
+                            The admin will send you a quote shortly.
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display order summary
+                summaryDiv.innerHTML = `
+                    <h3>Order Summary</h3>
+                    <div class="detail-row">
+                        <span>Order ID</span>
+                        <span><strong>${escapeHtml(order.id)}</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Service</span>
+                        <span>${escapeHtml(order.service)}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Requirements</span>
+                        <span style="text-align: right; max-width: 60%;">${escapeHtml(order.requirements || 'N/A')}</span>
+                    </div>
+                    <div class="price-large">GHS ${price}</div>
+                    <button id="payButton" class="pay-btn" onclick="proceedToPayment()">Accept Quote & Pay Now</button>
+                `;
+                errorDiv.innerHTML = '';
+
+            } catch (error) {
+                console.error('Error:', error);
+                summaryDiv.innerHTML = '';
+                errorDiv.innerHTML = `<div class="error-message">Error loading order: ${error.message}. Please make sure the server is running.</div>`;
+                summaryDiv.style.display = 'none';
+            }
+        }
+
+        async function proceedToPayment() {
+            if (!currentOrder) {
+                alert('No order loaded. Please enter an Order ID first.');
+                return;
+            }
+
+            // Use email from the stored order - no prompt needed
+            const email = currentOrder.email;
+            
+            if (!email) {
+                alert('No email found for this order. Please contact support.');
+                return;
+            }
+
+            const payBtn = document.getElementById('payButton');
+            const originalText = payBtn.innerText;
+            payBtn.innerText = 'Processing...';
+            payBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/accept-quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: currentOrder.id, email })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.href = result.authorization_url;
+                } else {
+                    alert('Error: ' + result.error);
+                    payBtn.innerText = originalText;
+                    payBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Payment initialization failed. Please try again.');
+                payBtn.innerText = originalText;
+                payBtn.disabled = false;
+            }
+        }
+
+        function formatStatus(status) {
+            const formats = {
+                'pending_quote': 'Pending Quote',
+                'quoted': 'Quote Ready',
+                'pending_payment': 'Awaiting Payment',
+                'paid': 'Paid',
+                'in_progress': 'In Progress',
+                'review': 'Ready for Review',
+                'completed': 'Completed'
+            };
+            return formats[status] || status;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

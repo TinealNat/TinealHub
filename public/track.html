@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TINEAL HUB - Track Order</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .track-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .track-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #1a1a2e;
+            border-bottom: 2px solid #1a1a2e;
+            margin-bottom: -2px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .search-form input {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        .search-form input:focus {
+            outline: none;
+            border-color: #1a1a2e;
+        }
+        .search-form button {
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .search-form button:hover {
+            background: #2d3748;
+        }
+        .order-details {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 16px;
+        }
+        .order-details h3 {
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        .order-info {
+            margin: 1rem 0;
+        }
+        .order-info p {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #d1fae5; color: #065f46; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-review { background: #fed7aa; color: #9a3412; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #1a1a2e;
+        }
+        .help-text {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: -0.5rem;
+        }
+        .order-list-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .order-list-item:hover {
+            border-color: #1a1a2e;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+    <div class="logo">
+        <img src="logo.png" alt="TINEAL HUB" class="logo-img" onerror="this.src='https://placehold.co/45x45/1a1a2e/white?text=TH'">
+        <div class="logo-text">
+            TINEAL HUB
+            <span>CREATIVE TECH + CONNECTIVITY</span>
+        </div>
+    </div>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Services</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="admin-login.html">Admin</a></li>
+        <li><a href="track.html">Track Order</a></li>
+        <li><a href="checkout.html">Checkout</a></li>
+    </ul>
+</nav>
+
+    <main>
+        <div class="track-container">
+            <h1>Track Your Order</h1>
+            <p>Search by Order ID or Phone Number</p>
+            
+            <div class="track-tabs">
+                <button class="tab-btn active" onclick="switchTab('orderid')">Search by Order ID</button>
+                <button class="tab-btn" onclick="switchTab('phone')">Search by Phone Number</button>
+            </div>
+            
+            <div id="orderid-tab" class="tab-content active">
+                <div class="search-form">
+                    <input type="text" id="orderIdInput" placeholder="Example: REQ1734567890123 or DATA1734567890123">
+                    <div class="help-text">Enter the Order ID you received via SMS</div>
+                    <button onclick="searchByOrderId()">Track Order</button>
+                </div>
+            </div>
+            
+            <div id="phone-tab" class="tab-content">
+                <div class="search-form">
+                    <input type="tel" id="phoneInput" placeholder="Example: 0500482034">
+                    <div class="help-text">Enter the phone number you used when ordering</div>
+                    <button onclick="searchByPhone()">Track Order</button>
+                </div>
+            </div>
+            
+            <div id="trackResult"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2025 TINEAL HUB | Creative Tech + Connectivity</p>
+    </footer>
+
+    <script>
+        async function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('orderid-tab').classList.remove('active');
+            document.getElementById('phone-tab').classList.remove('active');
+            
+            if (tab === 'orderid') {
+                document.getElementById('orderid-tab').classList.add('active');
+            } else {
+                document.getElementById('phone-tab').classList.add('active');
+            }
+            
+            document.getElementById('trackResult').innerHTML = '';
+        }
+        
+        async function searchByOrderId() {
+            const orderId = document.getElementById('orderIdInput').value.trim();
+            const resultDiv = document.getElementById('trackResult');
+            
+            if (!orderId) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter an Order ID</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">Searching for your order...</div>';
+            
+            try {
+                const response = await fetch(`/api/order/${orderId}`);
+                
+                if (response.status === 404) {
+                    resultDiv.innerHTML = '<div class="error-message">Order not found. Please check your Order ID and try again.</div>';
+                    return;
+                }
+                
+                const order = await response.json();
+                displayOrder(order);
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<div class="error-message">Error loading order. Please try again later.</div>';
+            }
+        }
+        
+        async function searchByPhone() {
+            let phone = document.getElementById('phoneInput').value.trim();
+            const resultDiv = document.getElementById('trackResult');
+            
+            if (!phone) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter a phone number</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="loading">Searching for orders...</div>';
+            
+            try {
+                const response = await fetch('/api/search-orders-by-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone })
+                });
+                
+                const result = await response.json();
+                
+                if (result.orders && result.orders.length > 0) {
+                    displayMultipleOrders(result.orders);
+                } else {
+                    resultDiv.innerHTML = '<div class="error-message">No orders found for this phone number. Please check and try again.</div>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '<div class="error-message">Error searching orders. Please try again later.</div>';
+            }
+        }
+        
+        function displayOrder(order) {
+            const resultDiv = document.getElementById('trackResult');
+            
+            const statusMap = {
+                'pending_quote': { text: 'Pending Quote', class: 'status-pending' },
+                'quoted': { text: 'Quote Sent', class: 'status-paid' },
+                'pending_payment': { text: 'Awaiting Payment', class: 'status-pending' },
+                'paid': { text: 'Payment Confirmed', class: 'status-paid' },
+                'in_progress': { text: 'Work in Progress', class: 'status-progress' },
+                'review': { text: 'Ready for Review', class: 'status-review' },
+                'completed': { text: 'Completed', class: 'status-completed' }
+            };
+            
+            const statusInfo = statusMap[order.status] || { text: order.status, class: 'status-pending' };
+            
+            let serviceInfo = '';
+            if (order.network && order.dataSize) {
+                serviceInfo = `
+                    <p><strong>Network:</strong> ${order.network}</p>
+                    <p><strong>Data Size:</strong> ${order.dataSize}</p>
+                    ${order.deliveryStatus === 'delivered' ? '<p class="success-message" style="margin-top: 0.5rem;">Data delivered to your phone number</p>' : ''}
+                `;
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="order-details">
+                    <h3>Order #${order.id}</h3>
+                    <div class="order-info">
+                        <p><strong>Customer Name:</strong> ${order.customerName || 'N/A'}</p>
+                        <p><strong>Service:</strong> ${order.service}</p>
+                        ${order.requirements ? `<p><strong>Requirements:</strong> ${order.requirements}</p>` : ''}
+                        ${serviceInfo}
+                        <p><strong>Amount:</strong> GHS ${order.quotedPrice || order.amount || 'N/A'}</p>
+                        <p><strong>Status:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></p>
+                        <p><strong>Payment:</strong> ${order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</p>
+                        <p><strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+                        <p><strong>Last Updated:</strong> ${new Date(order.updatedAt).toLocaleString()}</p>
+                    </div>
+                    ${order.status === 'completed' ? '<div class="success-message">Your order is complete. Check your email for the final files.</div>' : ''}
+                    ${order.status === 'quoted' ? '<div class="success-message">A quote has been sent to your phone. Click the link in the SMS to accept and pay.</div>' : ''}
+                    ${order.status === 'pending_payment' ? '<div class="success-message">Payment pending. Complete payment to start work.</div>' : ''}
+                    ${order.status === 'in_progress' ? '<div class="success-message">We are working on your order. You will receive updates.</div>' : ''}
+                </div>
+            `;
+        }
+        
+        function displayMultipleOrders(orders) {
+            const resultDiv = document.getElementById('trackResult');
+            
+            const statusMap = {
+                'pending_quote': 'Pending Quote',
+                'quoted': 'Quote Sent',
+                'pending_payment': 'Awaiting Payment',
+                'paid': 'Payment Confirmed',
+                'in_progress': 'In Progress',
+                'review': 'Ready for Review',
+                'completed': 'Completed'
+            };
+            
+            let html = `<div class="order-details"><h3>Found ${orders.length} order(s)</h3>`;
+            
+            orders.forEach(order => {
+                html += `
+                    <div class="order-list-item" onclick="viewOrder('${order.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <strong>${order.id}</strong><br>
+                                <span style="font-size: 0.8rem; color: #666;">${new Date(order.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div>${order.service}</div>
+                                <div>GHS ${order.quotedPrice || order.amount || 'N/A'}</div>
+                                <div><span class="status-badge ${getStatusClass(order.status)}">${statusMap[order.status] || order.status}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            resultDiv.innerHTML = html;
+        }
+        
+        function getStatusClass(status) {
+            const classes = {
+                'pending_quote': 'status-pending',
+                'quoted': 'status-paid',
+                'pending_payment': 'status-pending',
+                'paid': 'status-paid',
+                'in_progress': 'status-progress',
+                'review': 'status-review',
+                'completed': 'status-completed'
+            };
+            return classes[status] || 'status-pending';
+        }
+        
+        async function viewOrder(orderId) {
+            document.getElementById('orderIdInput').value = orderId;
+            await searchByOrderId();
+            document.getElementById('orderid-tab').classList.add('active');
+            document.getElementById('phone-tab').classList.remove('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn').classList.add('active');
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdFromUrl = urlParams.get('id');
+        if (orderIdFromUrl) {
+            document.getElementById('orderIdInput').value = orderIdFromUrl;
+            searchByOrderId();
+        }
+    </script>
+</body>
+</html>

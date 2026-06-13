@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TINEAL HUB - Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .refresh-btn, .logout-btn {
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+        }
+        .refresh-btn {
+            background: #1a1a2e;
+            color: white;
+        }
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.2rem;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .orders-table-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .orders-table th, .orders-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        .orders-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #d1fae5; color: #065f46; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-review { background: #fed7aa; color: #9a3412; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-select, .delivery-input, .notes-textarea {
+            width: 100%;
+            padding: 0.4rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+        }
+        .update-btn {
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            width: 100%;
+            margin-top: 0.3rem;
+        }
+        .quote-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-bottom: 0.3rem;
+            width: 100%;
+        }
+        .delivery-section {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+        .delivery-type-select {
+            padding: 0.3rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            margin-bottom: 0.3rem;
+            width: 100%;
+        }
+        .existing-delivery {
+            background: #f0fdf4;
+            padding: 0.3rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            margin-bottom: 0.3rem;
+        }
+        .existing-delivery a {
+            color: #059669;
+            text-decoration: none;
+        }
+        .filter-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            width: 250px;
+            margin-bottom: 1rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0.5rem 0;
+        }
+        .last-updated {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="logo.png" alt="TINEAL HUB" class="logo-img" onerror="this.src='https://placehold.co/45x45/1a1a2e/white?text=TH'">
+            <div class="logo-text">
+                TINEAL HUB
+                <span>CREATIVE TECH + CONNECTIVITY</span>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="shop.html">Services</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="admin-login.html">Admin</a></li>
+            <li><a href="track.html">Track Order</a></li>
+            <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1>Admin Dashboard</h1>
+                <div>
+                    <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            <div id="lastUpdated" class="last-updated">Loading dashboard...</div>
+            
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Total Orders</h3><div class="stat-number" id="totalOrders">-</div></div>
+                <div class="stat-card"><h3>Pending Quote</h3><div class="stat-number" id="pendingQuoteOrders">-</div></div>
+                <div class="stat-card"><h3>In Progress</h3><div class="stat-number" id="inProgressOrders">-</div></div>
+                <div class="stat-card"><h3>Completed</h3><div class="stat-number" id="completedOrders">-</div></div>
+            </div>
+            
+            <input type="text" id="searchInput" class="filter-input" placeholder="Search by Order ID, Customer, or Phone" onkeyup="filterOrders()">
+            
+            <div class="orders-table-container">
+                <div id="loadingSpinner" class="loading-spinner">Loading orders...</div>
+                <div id="ordersContent" style="display: none;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Service</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Delivery</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quote Modal -->
+    <div id="quoteModal" class="modal">
+        <div class="modal-content">
+            <span style="float: right; cursor: pointer; font-size: 1.5rem;" onclick="closeQuoteModal()">&times;</span>
+            <h2>Send Quote</h2>
+            <input type="hidden" id="quoteOrderId">
+            <label>Quote Price (GHS)</label>
+            <input type="number" id="quotePrice" required>
+            <label>Optional Message</label>
+            <textarea id="quoteMessage" rows="3"></textarea>
+            <button onclick="sendQuote()" class="pay-btn" style="width: 100%;">Send Quote via SMS</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 TINEAL HUB | Creative Tech + Connectivity</p>
+    </footer>
+
+    <script>
+        let allOrders = [];
+        const auth = localStorage.getItem('adminAuth');
+        if (!auth) window.location.href = '/admin-login.html';
+
+        function logout() { localStorage.removeItem('adminAuth'); window.location.href = '/admin-login.html'; }
+        
+        async function fetchWithAuth(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json', ...options.headers }
+            });
+            if (response.status === 401) { localStorage.removeItem('adminAuth'); window.location.href = '/admin-login.html'; throw new Error('Auth failed'); }
+            return response;
+        }
+
+        async function loadDashboard() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('ordersContent').style.display = 'none';
+            try {
+                const response = await fetchWithAuth('/api/orders');
+                const orders = await response.json();
+                allOrders = orders;
+                document.getElementById('totalOrders').innerText = orders.length;
+                document.getElementById('pendingQuoteOrders').innerText = orders.filter(o => o.status === 'pending_quote').length;
+                document.getElementById('inProgressOrders').innerText = orders.filter(o => o.status === 'in_progress').length;
+                document.getElementById('completedOrders').innerText = orders.filter(o => o.status === 'completed').length;
+                document.getElementById('lastUpdated').innerHTML = `Last updated: ${new Date().toLocaleString()} | ${orders.length} total orders`;
+                renderOrdersTable(orders);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('ordersContent').style.display = 'block';
+            } catch(e) { console.error(e); document.getElementById('loadingSpinner').innerHTML = 'Error loading orders. <button onclick="loadDashboard()">Retry</button>'; }
+        }
+
+        function renderOrdersTable(orders) {
+            const tbody = document.getElementById('ordersList');
+            tbody.innerHTML = '';
+            
+            orders.forEach(order => {
+                const row = tbody.insertRow();
+                const deliveryFileId = `deliveryFile-${order.id}`;
+                const deliveryLinkId = `deliveryLink-${order.id}`;
+                const deliveryTypeId = `deliveryType-${order.id}`;
+                const notesId = `reviewNotes-${order.id}`;
+                
+                // Show existing delivery if any
+                let existingDelivery = '';
+                if (order.deliveryFile) {
+                    existingDelivery = `<div class="existing-delivery">📎 <a href="/deliveries/${order.deliveryFile}" target="_blank">View uploaded file</a></div>`;
+                } else if (order.deliveryLink) {
+                    existingDelivery = `<div class="existing-delivery">🔗 <a href="${order.deliveryLink}" target="_blank">View delivery link</a></div>`;
+                }
+                
+                // Only show delivery options for Review or Completed status
+                const showDeliveryOptions = (order.status === 'review' || order.status === 'completed');
+                
+                row.innerHTML = `
+                    <td><strong>${order.id}</strong><br><small>${new Date(order.createdAt).toLocaleDateString()}</small></td>
+                    <td><strong>${escapeHtml(order.customerName)}</strong><br>${order.phone}</td>
+                    <td style="max-width: 180px;">${escapeHtml(order.service)}</td>
+                    <td>GHS ${order.quotedPrice || order.amount || '-'}</td>
+                    <td><span class="status-badge status-${getStatusClass(order.status)}">${formatStatus(order.status)}</span></td>
+                    <td><span class="status-badge ${order.paymentStatus === 'paid' ? 'status-paid' : 'status-pending'}">${order.paymentStatus === 'paid' ? 'Paid' : 'Pending'}</span></td>
+                    <td style="max-width: 150px;">${existingDelivery || '-'}</td>
+                    <td style="min-width: 220px;">
+                        ${order.status === 'pending_quote' && order.type !== 'data' ? `<button class="quote-btn" onclick="openQuoteModal('${order.id}')">Send Quote</button>` : ''}
+                        <select id="status-${order.id}" class="status-select" onchange="toggleDeliveryOptions('${order.id}')">
+                            <option value="pending_quote" ${order.status === 'pending_quote' ? 'selected' : ''}>Pending Quote</option>
+                            <option value="quoted" ${order.status === 'quoted' ? 'selected' : ''}>Quote Sent</option>
+                            <option value="pending_payment" ${order.status === 'pending_payment' ? 'selected' : ''}>Awaiting Payment</option>
+                            <option value="paid" ${order.status === 'paid' ? 'selected' : ''}>Payment Confirmed</option>
+                            <option value="in_progress" ${order.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="review" ${order.status === 'review' ? 'selected' : ''}>Ready for Review</option>
+                            <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                        
+                        <div id="deliverySection-${order.id}" class="delivery-section" style="display: ${showDeliveryOptions ? 'block' : 'none'};">
+                            <select id="${deliveryTypeId}" class="delivery-type-select">
+                                <option value="link">🔗 Send Link</option>
+                                <option value="file">📎 Upload File</option>
+                            </select>
+                            <input type="text" id="${deliveryLinkId}" class="delivery-input" placeholder="Paste delivery link (Google Drive, Figma, etc.)">
+                            <input type="file" id="${deliveryFileId}" class="delivery-input" style="display: none;" accept="image/*,application/pdf,.zip,.psd,.ai">
+                            <textarea id="${notesId}" class="notes-textarea" rows="2" placeholder="Notes to customer (optional)"></textarea>
+                        </div>
+                        
+                        <button class="update-btn" onclick="updateOrderStatus('${order.id}')">Update & Notify</button>
+                    </td>
+                `;
+                
+                // Handle delivery type toggle
+                const typeSelect = document.getElementById(deliveryTypeId);
+                const linkInput = document.getElementById(deliveryLinkId);
+                const fileInput = document.getElementById(deliveryFileId);
+                if (typeSelect) {
+                    typeSelect.onchange = () => {
+                        if (typeSelect.value === 'link') {
+                            linkInput.style.display = 'block';
+                            fileInput.style.display = 'none';
+                        } else {
+                            linkInput.style.display = 'none';
+                            fileInput.style.display = 'block';
+                        }
+                    };
+                    // Initialize visibility
+                    if (typeSelect.value === 'link') {
+                        linkInput.style.display = 'block';
+                        fileInput.style.display = 'none';
+                    } else {
+                        linkInput.style.display = 'none';
+                        fileInput.style.display = 'block';
+                    }
+                }
+            });
+        }
+        
+        function toggleDeliveryOptions(orderId) {
+            const statusSelect = document.getElementById(`status-${orderId}`);
+            const deliverySection = document.getElementById(`deliverySection-${orderId}`);
+            if (statusSelect && deliverySection) {
+                const newStatus = statusSelect.value;
+                // Show delivery section only for 'review' or 'completed'
+                if (newStatus === 'review' || newStatus === 'completed') {
+                    deliverySection.style.display = 'block';
+                } else {
+                    deliverySection.style.display = 'none';
+                }
+            }
+        }
+
+        async function updateOrderStatus(orderId) {
+            const select = document.getElementById(`status-${orderId}`);
+            const newStatus = select.value;
+            const deliveryType = document.getElementById(`deliveryType-${orderId}`)?.value;
+            const deliveryLink = document.getElementById(`deliveryLink-${orderId}`)?.value;
+            const deliveryFile = document.getElementById(`deliveryFile-${orderId}`)?.files[0];
+            const reviewNotes = document.getElementById(`reviewNotes-${orderId}`)?.value;
+            
+            const updateBtn = event.target;
+            const originalText = updateBtn.innerText;
+            updateBtn.innerText = 'Processing...';
+            updateBtn.disabled = true;
+            
+            try {
+                let fileData = null;
+                let fileName = null;
+                if (deliveryType === 'file' && deliveryFile) {
+                    const reader = new FileReader();
+                    fileData = await new Promise((resolve) => {
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(deliveryFile);
+                    });
+                    fileName = `${orderId}_${Date.now()}_${deliveryFile.name}`;
+                }
+                
+                const response = await fetchWithAuth('/api/update-order-status-with-delivery', {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        orderId, 
+                        status: newStatus,
+                        deliveryType: deliveryType || null,
+                        deliveryLink: deliveryLink || null,
+                        deliveryFile: fileData,
+                        deliveryFileName: fileName,
+                        reviewNotes: reviewNotes || null
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Status updated! Customer will receive SMS and Email notification.');
+                    loadDashboard();
+                } else {
+                    alert('Failed to update: ' + (result.error || 'Unknown error'));
+                    updateBtn.innerText = originalText;
+                    updateBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating status. Please try again.');
+                updateBtn.innerText = originalText;
+                updateBtn.disabled = false;
+            }
+        }
+
+        function openQuoteModal(orderId) {
+            document.getElementById('quoteOrderId').value = orderId;
+            document.getElementById('quoteModal').style.display = 'block';
+        }
+        
+        function closeQuoteModal() {
+            document.getElementById('quoteModal').style.display = 'none';
+            document.getElementById('quoteForm')?.reset();
+        }
+        
+        async function sendQuote() {
+            const orderId = document.getElementById('quoteOrderId').value;
+            const quotedPrice = document.getElementById('quotePrice').value;
+            const message = document.getElementById('quoteMessage').value;
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = 'Sending...';
+            try {
+                const response = await fetchWithAuth('/api/send-quote', {
+                    method: 'POST',
+                    body: JSON.stringify({ orderId, quotedPrice, message })
+                });
+                const result = await response.json();
+                if (result.success) { alert('Quote sent! Customer will receive SMS.'); closeQuoteModal(); loadDashboard(); }
+                else alert('Failed to send quote');
+            } catch(e) { alert('Error sending quote'); }
+            finally { btn.innerText = originalText; }
+        }
+
+        function filterOrders() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            if (!term) renderOrdersTable(allOrders);
+            else renderOrdersTable(allOrders.filter(o => o.id.toLowerCase().includes(term) || o.customerName.toLowerCase().includes(term) || o.phone.includes(term)));
+        }
+
+        function getStatusClass(s) {
+            const c = { 'pending_quote':'pending', 'quoted':'paid', 'pending_payment':'pending', 'paid':'paid', 'in_progress':'progress', 'review':'review', 'completed':'completed' };
+            return c[s] || 'pending';
+        }
+        
+        function formatStatus(s) {
+            const f = { 'pending_quote':'Pending Quote', 'quoted':'Quote Sent', 'pending_payment':'Awaiting Payment', 'paid':'Payment Confirmed', 'in_progress':'In Progress', 'review':'Ready for Review', 'completed':'Completed' };
+            return f[s] || s;
+        }
+        
+        function escapeHtml(t) { if(!t) return ''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('quoteModal');
+            if (event.target === modal) closeQuoteModal();
+        }
+        
+        loadDashboard();
+        setInterval(() => { if(document.visibilityState === 'visible') loadDashboard(); }, 30000);
+    </script>
+</body>
+</html>

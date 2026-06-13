@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TINEAL HUB - Services</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .category-section {
+            margin-bottom: 3rem;
+        }
+        .category-header {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .category-header:hover {
+            background: #f8fafc;
+        }
+        .category-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        .category-header span {
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .category-content {
+            display: none;
+            padding: 1rem 0 2rem 0;
+        }
+        .category-content.open {
+            display: block;
+        }
+        .subcategory {
+            margin: 1.5rem 0 1rem 0;
+            padding-left: 1rem;
+            border-left: 3px solid #1a1a2e;
+        }
+        .subcategory h3 {
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .service-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .service-item:hover {
+            background: white;
+            border-color: #1a1a2e;
+        }
+        .service-name {
+            font-weight: 500;
+        }
+        .service-price {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.8rem;
+        }
+        .data-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+        }
+        .data-item:hover {
+            background: white;
+            border-color: #1a1a2e;
+        }
+        .data-size {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .data-price {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        .network-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            margin-bottom: 0.3rem;
+        }
+        .mtn-badge { background: #ffd700; color: #1a1a2e; }
+        .telecel-badge { background: #dc2626; color: white; }
+        .airtel-badge { background: #10b981; color: white; }
+        .request-form textarea, .request-form input, .request-form select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .file-upload {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .file-upload:hover {
+            border-color: #1a1a2e;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 150px;
+            margin-top: 0.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+    <div class="logo">
+        <img src="logo.png" alt="TINEAL HUB" class="logo-img" onerror="this.src='https://placehold.co/45x45/1a1a2e/white?text=TH'">
+        <div class="logo-text">
+            TINEAL HUB
+            <span>CREATIVE TECH + CONNECTIVITY</span>
+        </div>
+    </div>
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Services</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="admin-login.html">Admin</a></li>
+        <li><a href="track.html">Track Order</a></li>
+        <li><a href="checkout.html">Checkout</a></li>
+    </ul>
+</nav>
+
+    <main>
+        <div class="section-header">
+            <h1>Our Services</h1>
+            <p>Choose a category to get started</p>
+        </div>
+
+        <!-- ========== 1. IT SERVICES ========== -->
+        <div class="category-section" id="it-section">
+            <div class="category-header" onclick="toggleCategory('it')">
+                <h2>IT & Web Solutions</h2>
+                <span>▼</span>
+            </div>
+            <div id="it-content" class="category-content">
+                <p style="margin-bottom: 1rem;">Describe your project and we'll send you a custom quote.</p>
+                <div class="service-grid">
+                    <div class="service-item" onclick="openRequestForm('IT', 'Website Development')">
+                        <span class="service-name">Website Development</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                    <div class="service-item" onclick="openRequestForm('IT', 'Web Application')">
+                        <span class="service-name">Web Application</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                    <div class="service-item" onclick="openRequestForm('IT', 'E-commerce Store')">
+                        <span class="service-name">E-commerce Store</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                    <div class="service-item" onclick="openRequestForm('IT', 'Business Management System')">
+                        <span class="service-name">Business Management System</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                    <div class="service-item" onclick="openRequestForm('IT', 'Mobile App Development')">
+                        <span class="service-name">Mobile App Development</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                    <div class="service-item" onclick="openRequestForm('IT', 'API Integration')">
+                        <span class="service-name">API Integration</span>
+                        <span class="service-price">Quote</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 2. GRAPHIC DESIGN ========== -->
+        <div class="category-section" id="design-section">
+            <div class="category-header" onclick="toggleCategory('design')">
+                <h2>Graphic Design</h2>
+                <span>▼</span>
+            </div>
+            <div id="design-content" class="category-content">
+                <!-- Printing -->
+                <div class="subcategory">
+                    <h3>Printing Services</h3>
+                    <div class="service-grid">
+                        <div class="service-item" onclick="openRequestForm('Printing', 'Business Cards')">
+                            <span class="service-name">Business Cards</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Printing', 'Flyers & Brochures')">
+                            <span class="service-name">Flyers & Brochures</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Printing', 'Banners & Roll-ups')">
+                            <span class="service-name">Banners & Roll-ups</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Printing', 'Posters')">
+                            <span class="service-name">Posters</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Printing', 'Stickers & Labels')">
+                            <span class="service-name">Stickers & Labels</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Designing -->
+                <div class="subcategory">
+                    <h3>Designing</h3>
+                    <div class="service-grid">
+                        <div class="service-item" onclick="openRequestForm('Designing', 'Logo Design')">
+                            <span class="service-name">Logo Design</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Designing', 'Social Media Pack')">
+                            <span class="service-name">Social Media Pack</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Designing', 'Brand Identity')">
+                            <span class="service-name">Brand Identity</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Designing', 'Packaging Design')">
+                            <span class="service-name">Packaging Design</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                        <div class="service-item" onclick="openRequestForm('Designing', 'UI/UX Design')">
+                            <span class="service-name">UI/UX Design</span>
+                            <span class="service-price">Quote</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T-shirt Printing with Upload -->
+                <div class="subcategory">
+                    <h3>T-shirt Printing</h3>
+                    <div class="service-item" onclick="openTshirtForm()">
+                        <span class="service-name">Custom T-shirt Printing</span>
+                        <span class="service-price">Upload Mockup</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 3. DATA BUNDLES ========== -->
+        <div class="category-section" id="data-section">
+            <div class="category-header" onclick="toggleCategory('data')">
+                <h2>Mobile Data Bundles</h2>
+                <span>▼</span>
+            </div>
+            <div id="data-content" class="category-content">
+                <!-- MTN -->
+                <div class="subcategory">
+                    <h3><span class="network-badge mtn-badge">MTN</span></h3>
+                    <div class="data-grid">
+                        <div class="data-item" onclick="buyData('MTN', '1GB', 5)">
+                            <div class="data-size">1GB</div>
+                            <div class="data-price">GHS 5</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('MTN', '2GB', 10)">
+                            <div class="data-size">2GB</div>
+                            <div class="data-price">GHS 10</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('MTN', '3GB', 15)">
+                            <div class="data-size">3GB</div>
+                            <div class="data-price">GHS 15</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('MTN', '5GB', 25)">
+                            <div class="data-size">5GB</div>
+                            <div class="data-price">GHS 25</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('MTN', '10GB', 45)">
+                            <div class="data-size">10GB</div>
+                            <div class="data-price">GHS 45</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telecel -->
+                <div class="subcategory">
+                    <h3><span class="network-badge telecel-badge">Telecel</span></h3>
+                    <div class="data-grid">
+                        <div class="data-item" onclick="buyData('Telecel', '6GB', 25)">
+                            <div class="data-size">6GB</div>
+                            <div class="data-price">GHS 25</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('Telecel', '10GB', 50)">
+                            <div class="data-size">10GB</div>
+                            <div class="data-price">GHS 50</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('Telecel', '15GB', 70)">
+                            <div class="data-size">15GB</div>
+                            <div class="data-price">GHS 70</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('Telecel', '20GB', 90)">
+                            <div class="data-size">20GB</div>
+                            <div class="data-price">GHS 90</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AirtelTigo -->
+                <div class="subcategory">
+                    <h3><span class="network-badge airtel-badge">AirtelTigo</span></h3>
+                    <div class="data-grid">
+                        <div class="data-item" onclick="buyData('AirtelTigo', '1GB', 5)">
+                            <div class="data-size">1GB</div>
+                            <div class="data-price">GHS 5</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('AirtelTigo', '2GB', 10)">
+                            <div class="data-size">2GB</div>
+                            <div class="data-price">GHS 10</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('AirtelTigo', '3GB', 15)">
+                            <div class="data-size">3GB</div>
+                            <div class="data-price">GHS 15</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('AirtelTigo', '5GB', 25)">
+                            <div class="data-size">5GB</div>
+                            <div class="data-price">GHS 25</div>
+                        </div>
+                        <div class="data-item" onclick="buyData('AirtelTigo', '10GB', 45)">
+                            <div class="data-size">10GB</div>
+                            <div class="data-price">GHS 45</div>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.8rem; color: #666;">Data is delivered instantly after payment via DataMart API.</p>
+            </div>
+        </div>
+    </main>
+
+        <!-- Request Form Modal (for IT, Printing, Designing) -->
+    <div id="requestModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <span class="close" onclick="closeModal('requestModal')">&times;</span>
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h2 style="color: #1a1a2e; margin-bottom: 0.25rem;">Request a Quote</h2>
+                <p style="color: #666; font-size: 0.85rem;">Fill in the details below and we'll get back to you within 24 hours</p>
+            </div>
+            <form id="requestForm">
+                <input type="hidden" id="reqCategory">
+                <input type="hidden" id="reqService">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Full Name <span style="color: #dc2626;">*</span></label>
+                        <input type="text" id="reqName" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Email <span style="color: #dc2626;">*</span></label>
+                        <input type="email" id="reqEmail" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem;">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Phone Number <span style="color: #dc2626;">*</span></label>
+                    <input type="tel" id="reqPhone" required placeholder="024XXXXXXX" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem;">
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Project Details <span style="color: #dc2626;">*</span></label>
+                    <textarea id="reqDetails" rows="5" placeholder="Describe what you need... For example:&#10;• Type of website or design&#10;• Number of pages&#10;• Color preferences&#10;• Deadline&#10;• Any reference websites" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+                
+                <button type="submit" class="pay-btn" style="width: 100%; margin-top: 1rem; background: #1a1a2e; padding: 0.9rem; font-size: 1rem; border-radius: 40px;">
+                    Submit Request
+                </button>
+                
+                <p style="text-align: center; font-size: 0.7rem; color: #999; margin-top: 1rem;">
+                    We'll review your request and send a quote via SMS
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- T-shirt Printing Modal -->
+    <div id="tshirtModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('tshirtModal')">&times;</span>
+            <h2>T-shirt Printing Request</h2>
+            <form id="tshirtForm">
+                <label>Full Name *</label>
+                <input type="text" id="tshirtName" required>
+                <label>Email *</label>
+                <input type="email" id="tshirtEmail" required>
+                <label>Phone Number *</label>
+                <input type="tel" id="tshirtPhone" required>
+                <label>Quantity</label>
+                <input type="number" id="tshirtQty" min="1" value="1">
+                <label>Design Description</label>
+                <textarea id="tshirtDesc" rows="3" placeholder="Describe the design you want..."></textarea>
+                <label>Upload Mockup / Reference Image</label>
+                <div class="file-upload" onclick="document.getElementById('mockupFile').click()">
+                    Click to upload image (PNG, JPG)
+                </div>
+                <input type="file" id="mockupFile" accept="image/*" style="display: none;">
+                <img id="preview" class="preview-image" alt="Preview">
+                <button type="submit" class="pay-btn">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+        <!-- Data Purchase Modal -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('dataModal')">&times;</span>
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h2 style="color: #1a1a2e; margin-bottom: 0.25rem;">Buy Data Bundle</h2>
+                <p style="color: #666; font-size: 0.85rem;">Instant delivery after payment</p>
+            </div>
+            <form id="dataForm">
+                <input type="hidden" id="dataNetwork">
+                <input type="hidden" id="dataSize">
+                <input type="hidden" id="dataPrice">
+                
+                <div>
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Full Name <span style="color: #dc2626;">*</span></label>
+                    <input type="text" id="dataName" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px;">
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Email <span style="color: #dc2626;">*</span></label>
+                    <input type="email" id="dataEmail" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px;">
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333;">Phone Number (to receive data) <span style="color: #dc2626;">*</span></label>
+                    <input type="tel" id="dataPhone" required placeholder="024XXXXXXX" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 12px;">
+                </div>
+                
+                <div style="margin-top: 1rem; background: #f8fafc; border-radius: 12px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 500;">Selected Bundle:</span>
+                        <span id="dataBundleDisplay" style="font-weight: 700; color: #1a1a2e;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <span style="font-weight: 500;">Total Amount:</span>
+                        <span id="dataAmountDisplay" style="font-size: 1.3rem; font-weight: 700; color: #1a1a2e;"></span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="pay-btn" style="width: 100%; margin-top: 1.5rem; background: #1a1a2e; padding: 0.9rem; font-size: 1rem; border-radius: 40px;">
+                    Proceed to Payment
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 TINEAL HUB | Creative Tech + Connectivity</p>
+    </footer>
+
+    <script>
+        // Toggle category visibility
+        function toggleCategory(category) {
+            const content = document.getElementById(`${category}-content`);
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('span');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                arrow.innerHTML = '▼';
+            } else {
+                content.classList.add('open');
+                arrow.innerHTML = '▲';
+            }
+        }
+
+        // Open request form for IT/Printing/Designing
+        function openRequestForm(category, service) {
+            document.getElementById('reqCategory').value = category;
+            document.getElementById('reqService').value = service;
+            document.getElementById('requestModal').style.display = 'block';
+        }
+
+        function openTshirtForm() {
+            document.getElementById('tshirtModal').style.display = 'block';
+        }
+
+        // Handle T-shirt mockup preview
+        document.getElementById('mockupFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('preview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Submit request for IT/Printing/Designing
+        document.getElementById('requestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('.pay-btn');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = 'Submitting...';
+            submitBtn.disabled = true;
+
+            const requestData = {
+                customerName: document.getElementById('reqName').value,
+                email: document.getElementById('reqEmail').value,
+                phone: document.getElementById('reqPhone').value,
+                service: document.getElementById('reqService').value,
+                category: document.getElementById('reqCategory').value,
+                requirements: document.getElementById('reqDetails').value
+            };
+
+            try {
+                const response = await fetch('/api/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Request submitted! Your request ID is: ${result.orderId}\nWe will review and send a quote within 24 hours.`);
+                    closeModal('requestModal');
+                    document.getElementById('requestForm').reset();
+                } else {
+                    alert('Failed to submit. Try again.');
+                }
+            } catch (error) {
+                alert('Error submitting request.');
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Submit T-shirt request
+        document.getElementById('tshirtForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('mockupFile');
+            let mockupBase64 = '';
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                mockupBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const requestData = {
+                customerName: document.getElementById('tshirtName').value,
+                email: document.getElementById('tshirtEmail').value,
+                phone: document.getElementById('tshirtPhone').value,
+                service: 'T-shirt Printing',
+                category: 'Tshirt',
+                requirements: `Quantity: ${document.getElementById('tshirtQty').value}\nDesign Description: ${document.getElementById('tshirtDesc').value}`,
+                mockupImage: mockupBase64
+            };
+
+            const submitBtn = e.target.querySelector('.pay-btn');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = 'Submitting...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`T-shirt request submitted! ID: ${result.orderId}\nWe will review and quote you soon.`);
+                    closeModal('tshirtModal');
+                    document.getElementById('tshirtForm').reset();
+                    document.getElementById('preview').style.display = 'none';
+                } else {
+                    alert('Failed to submit.');
+                }
+            } catch (error) {
+                alert('Error submitting request.');
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Data purchase flow
+        function buyData(network, size, price) {
+            document.getElementById('dataNetwork').value = network;
+            document.getElementById('dataSize').value = size;
+            document.getElementById('dataPrice').value = price;
+            document.getElementById('dataBundleDisplay').innerHTML = `${network} ${size}`;
+            document.getElementById('dataAmountDisplay').innerHTML = `GHS ${price}`;
+            document.getElementById('dataModal').style.display = 'block';
+        }
+
+        // Submit data purchase
+        document.getElementById('dataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('.pay-btn');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = 'Processing...';
+            submitBtn.disabled = true;
+
+            const dataOrder = {
+                customerName: document.getElementById('dataName').value,
+                email: document.getElementById('dataEmail').value,
+                phone: document.getElementById('dataPhone').value,
+                network: document.getElementById('dataNetwork').value,
+                dataSize: document.getElementById('dataSize').value,
+                amount: parseInt(document.getElementById('dataPrice').value)
+            };
+
+            try {
+                const orderResponse = await fetch('/api/create-data-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataOrder)
+                });
+                const orderResult = await orderResponse.json();
+                if (!orderResult.success) throw new Error('Order creation failed');
+
+                const paymentResponse = await fetch('/api/initialize-data-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: dataOrder.email,
+                        amount: dataOrder.amount,
+                        orderId: orderResult.orderId,
+                        customerName: dataOrder.customerName,
+                        phone: dataOrder.phone,
+                        network: dataOrder.network,
+                        dataSize: dataOrder.dataSize
+                    })
+                });
+                const paymentData = await paymentResponse.json();
+                if (paymentData.success) {
+                    window.location.href = paymentData.authorization_url;
+                } else {
+                    alert('Payment initialization failed.');
+                }
+            } catch (error) {
+                alert('Error processing data order.');
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Auto-open category based on URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const category = urlParams.get('category');
+        if (category === 'it') {
+            toggleCategory('it');
+            document.getElementById('it-section').scrollIntoView({ behavior: 'smooth' });
+        } else if (category === 'design') {
+            toggleCategory('design');
+            document.getElementById('design-section').scrollIntoView({ behavior: 'smooth' });
+        } else if (category === 'data') {
+            toggleCategory('data');
+            document.getElementById('data-section').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TINEAL HUB - Accept Quote & Pay</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .payment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .payment-header h1 {
+            color: #1a1a2e;
+            margin-bottom: 0.25rem;
+        }
+        .payment-header p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .quote-details {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .price-large {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        .accept-btn {
+            width: 100%;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+        .accept-btn:hover {
+            background: #2d3748;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        .error-state {
+            text-align: center;
+            padding: 2rem;
+            color: #dc2626;
+        }
+        .info-note {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">
+            <img src="logo.png" alt="TINEAL HUB" class="logo-img" onerror="this.src='https://placehold.co/45x45/1a1a2e/white?text=TH'">
+            <div class="logo-text">
+                TINEAL HUB
+                <span>CREATIVE TECH + CONNECTIVITY</span>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="shop.html">Services</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="track.html">Track Order</a></li>
+            <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="payment-container" id="paymentContainer">
+            <div id="loadingState" class="loading-state">
+                <p>Loading quote details...</p>
+            </div>
+            
+            <div id="quoteState" style="display: none;">
+                <div class="payment-header">
+                    <h1>Complete Your Payment</h1>
+                    <p>Review the quote below and proceed to payment</p>
+                </div>
+                
+                <div class="quote-details" id="quoteDetails"></div>
+                
+                <button class="accept-btn" onclick="acceptAndPay()">Accept Quote & Pay Now</button>
+                
+                <div class="info-note">
+                    Payment will be processed securely via Paystack. Receipt will be sent to your email.
+                </div>
+            </div>
+            
+            <div id="errorState" style="display: none;" class="error-state">
+                <p>Quote not found or has expired.</p>
+                <a href="shop.html">Request New Quote →</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2025 TINEAL HUB | Creative Tech + Connectivity</p>
+    </footer>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        let currentOrder = null;
+
+        async function loadQuote() {
+            if (!orderId) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/order/${orderId}`);
+                const order = await response.json();
+                
+                if (order && (order.status === 'quoted' || order.status === 'pending_payment')) {
+                    currentOrder = order;
+                    
+                    document.getElementById('quoteDetails').innerHTML = `
+                        <div class="detail-row">
+                            <span>Order ID</span>
+                            <span><strong>${order.id}</strong></span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Service</span>
+                            <span>${escapeHtml(order.service)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Requirements</span>
+                            <span style="text-align: right; max-width: 60%;">${escapeHtml(order.requirements || 'No specific requirements')}</span>
+                        </div>
+                        <div class="price-large">GHS ${order.quotedPrice}</div>
+                    `;
+                    
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('quoteState').style.display = 'block';
+                } else {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('errorState').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+            }
+        }
+        
+        async function acceptAndPay() {
+            if (!currentOrder) {
+                alert('No order loaded.');
+                return;
+            }
+            
+            // Use the email already stored in the order
+            const email = currentOrder.email;
+            
+            if (!email) {
+                alert('No email found for this order. Please contact support.');
+                return;
+            }
+            
+            const acceptBtn = document.querySelector('.accept-btn');
+            const originalText = acceptBtn.innerText;
+            acceptBtn.innerText = 'Processing...';
+            acceptBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/accept-quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: currentOrder.id, email })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.authorization_url;
+                } else {
+                    alert('Error: ' + result.error);
+                    acceptBtn.innerText = originalText;
+                    acceptBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Payment initialization failed. Please try again.');
+                acceptBtn.innerText = originalText;
+                acceptBtn.disabled = false;
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        loadQuote();
+    </script>
+</body>
+</html>
