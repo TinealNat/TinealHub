@@ -10,6 +10,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ============ PRODUCTION BASE URL ============
+// Use environment variable or default to Render URL
+const BASE_URL = process.env.BASE_URL || 'https://tinealhub.onrender.com';
+
 // Admin credentials
 const ADMIN_USERNAME = 'tinealadmin';
 const ADMIN_PASSWORD = 'TinealHub2024!';
@@ -17,6 +21,9 @@ const ADMIN_PASSWORD = 'TinealHub2024!';
 // Email transporter setup
 let transporter = null;
 
+console.log('🚀 TINEAL HUB Starting...');
+console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📍 Base URL: ${BASE_URL}`);
 console.log('📧 Email Configuration Check:');
 console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? 'Set to ' + process.env.EMAIL_USER : 'Not set'}`);
 console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? 'Set (length: ' + process.env.EMAIL_PASS.length + ')' : 'Not set'}`);
@@ -280,7 +287,7 @@ app.post('/api/create-order', (req, res) => {
         console.log(`   📸 Mockup saved`);
     }
     
-    sendSMS(phone, `TINEAL HUB: We received your request #${newOrder.id} (${service}). We will review and send you a quote within 24 hours. Track: http://localhost:${PORT}/track.html?id=${newOrder.id}`);
+    sendSMS(phone, `TINEAL HUB: We received your request #${newOrder.id} (${service}). We will review and send you a quote within 24 hours. Track: ${BASE_URL}/track.html?id=${newOrder.id}`);
     
     res.json({ success: true, orderId: newOrder.id });
 });
@@ -331,7 +338,7 @@ app.post('/api/initialize-data-payment', async (req, res) => {
         const response = await axios.post('https://api.paystack.co/transaction/initialize', {
             email: email,
             amount: amount * 100,
-            callback_url: `http://localhost:${PORT}/payment-callback.html`,
+            callback_url: `${BASE_URL}/payment-callback.html`,
             metadata: {
                 orderId: orderId,
                 customerName: customerName,
@@ -372,8 +379,8 @@ app.post('/api/send-quote', requireAuth, async (req, res) => {
     orders[orderIndex].updatedAt = new Date().toISOString();
     saveOrders(orders);
     
-    const paymentLink = `http://localhost:${PORT}/payment-page.html?id=${orderId}&amount=${quotedPrice}`;
-    const fallbackLink = `http://localhost:${PORT}/checkout.html?id=${orderId}`;
+    const paymentLink = `${BASE_URL}/payment-page.html?id=${orderId}&amount=${quotedPrice}`;
+    const fallbackLink = `${BASE_URL}/checkout.html?id=${orderId}`;
     const smsMessage = message || `TINEAL HUB: Quote for #${orderId} is GHS ${quotedPrice}. Pay here: ${paymentLink} | If link fails: ${fallbackLink}`;
     
     await sendSMS(orders[orderIndex].phone, smsMessage);
@@ -418,7 +425,7 @@ app.post('/api/accept-quote', async (req, res) => {
         const response = await axios.post('https://api.paystack.co/transaction/initialize', {
             email: customerEmail,
             amount: amount * 100,
-            callback_url: `http://localhost:${PORT}/payment-callback.html`,
+            callback_url: `${BASE_URL}/payment-callback.html`,
             metadata: {
                 orderId: orderId,
                 customerName: customerName,
@@ -484,7 +491,7 @@ app.post('/api/paystack-webhook', async (req, res) => {
                     saveOrders(orders);
                 }
             } else {
-                await sendSMS(metadata.phone, `TINEAL HUB: Payment received for #${orderId}. We will start working within 24 hours. Track: http://localhost:${PORT}/track.html?id=${orderId}`);
+                await sendSMS(metadata.phone, `TINEAL HUB: Payment received for #${orderId}. We will start working within 24 hours. Track: ${BASE_URL}/track.html?id=${orderId}`);
             }
         }
     }
@@ -656,7 +663,7 @@ app.post('/api/update-order-status-with-delivery', requireAuth, async (req, res)
     if (deliveryType === 'link' && deliveryLink) {
         deliveryHtml = `<p><strong>Access your work here:</strong> <a href="${deliveryLink}" style="color: #1a1a2e;">${deliveryLink}</a></p>`;
     } else if (deliveryType === 'file' && savedFileName) {
-        const fileUrl = `http://localhost:${PORT}/deliveries/${savedFileName}`;
+        const fileUrl = `${BASE_URL}/deliveries/${savedFileName}`;
         deliveryHtml = `<p><strong>Download your work:</strong> <a href="${fileUrl}" style="color: #1a1a2e;">Click here to download</a></p>`;
     }
     
@@ -681,7 +688,7 @@ app.post('/api/update-order-status-with-delivery', requireAuth, async (req, res)
                     ${deliveryHtml}
                     <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;">
                         <p><strong>Order ID:</strong> ${orderId}</p>
-                        <p><strong>Track your order:</strong> <a href="http://localhost:${PORT}/track.html?id=${orderId}" style="color: #1a1a2e;">http://localhost:${PORT}/track.html?id=${orderId}</a></p>
+                        <p><strong>Track your order:</strong> <a href="${BASE_URL}/track.html?id=${orderId}" style="color: #1a1a2e;">${BASE_URL}/track.html?id=${orderId}</a></p>
                     </div>
                     <p>Please review and let us know if you need any changes.</p>
                     <br>
@@ -731,7 +738,7 @@ app.post('/api/update-order-status-with-delivery', requireAuth, async (req, res)
                     ${reviewNotes ? `<div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;"><strong>Notes from the team:</strong><br>${reviewNotes}</div>` : ''}
                     <p>You will receive updates as we progress.</p>
                     <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;">
-                        <p><strong>Track your order:</strong> <a href="http://localhost:${PORT}/track.html?id=${orderId}" style="color: #1a1a2e;">http://localhost:${PORT}/track.html?id=${orderId}</a></p>
+                        <p><strong>Track your order:</strong> <a href="${BASE_URL}/track.html?id=${orderId}" style="color: #1a1a2e;">${BASE_URL}/track.html?id=${orderId}</a></p>
                     </div>
                     <br>
                     <p>Thank you for choosing TINEAL HUB!</p>
@@ -831,12 +838,13 @@ app.listen(PORT, () => {
     console.log('\n=================================');
     console.log('🚀 TINEAL HUB is running');
     console.log('=================================');
-    console.log(`📱 Store: http://localhost:${PORT}`);
-    console.log(`🔒 Admin: http://localhost:${PORT}/admin-login.html`);
-    console.log(`💳 Checkout: http://localhost:${PORT}/checkout.html`);
-    console.log(`🔍 Track: http://localhost:${PORT}/track.html`);
-    console.log(`📧 Test Email: POST /api/test-email`);
-    console.log(`🐛 Debug Order: GET /api/debug-order/:id`);
+    console.log(`📍 BASE_URL: ${BASE_URL}`);
+    console.log(`📱 Store: ${BASE_URL}`);
+    console.log(`🔒 Admin: ${BASE_URL}/admin-login.html`);
+    console.log(`💳 Checkout: ${BASE_URL}/checkout.html`);
+    console.log(`🔍 Track: ${BASE_URL}/track.html`);
+    console.log(`📧 Test Email: POST ${BASE_URL}/api/test-email`);
+    console.log(`🐛 Debug Order: GET ${BASE_URL}/api/debug-order/:id`);
     console.log('=================================\n');
     
     if (transporter) {
