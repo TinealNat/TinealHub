@@ -11,7 +11,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============ PRODUCTION BASE URL ============
-// Use environment variable or default to Render URL
 const BASE_URL = process.env.BASE_URL || 'https://tinealhub.onrender.com';
 
 // Admin credentials
@@ -22,18 +21,13 @@ const ADMIN_PASSWORD = 'TinealHub2024!';
 let transporter = null;
 
 console.log('🚀 TINEAL HUB Starting...');
-console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 console.log(`📍 Base URL: ${BASE_URL}`);
-console.log('📧 Email Configuration Check:');
-console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? 'Set to ' + process.env.EMAIL_USER : 'Not set'}`);
-console.log(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? 'Set (length: ' + process.env.EMAIL_PASS.length + ')' : 'Not set'}`);
 
 // Check if email should be configured
 const isEmailConfigured = process.env.EMAIL_USER && 
                          process.env.EMAIL_USER !== 'your_email@gmail.com' && 
                          process.env.EMAIL_PASS && 
-                         process.env.EMAIL_PASS !== 'your_password' &&
-                         process.env.EMAIL_PASS !== 'your_16_character_app_password_here';
+                         process.env.EMAIL_PASS !== 'your_password';
 
 if (isEmailConfigured) {
     try {
@@ -46,13 +40,13 @@ if (isEmailConfigured) {
                 pass: process.env.EMAIL_PASS
             }
         });
-        console.log('✅ Email transporter initialized successfully');
+        console.log('✅ Email transporter initialized');
     } catch (error) {
-        console.log('⚠️ Email transporter error:', error.message);
+        console.log('⚠️ Email error:', error.message);
         transporter = null;
     }
 } else {
-    console.log('⚠️ Email not configured - will log to console only');
+    console.log('⚠️ Email not configured - will log to console');
 }
 
 // Middleware
@@ -63,6 +57,29 @@ app.use(express.static('public'));
 
 // Serve delivery files
 app.use('/deliveries', express.static(path.join(__dirname, 'public', 'deliveries')));
+
+// ============ URL REWRITING (Hide .html extensions) ============
+app.use((req, res, next) => {
+    // Skip API routes and static assets with extensions
+    if (req.path.startsWith('/api/') || (req.path.includes('.') && !req.path.endsWith('.html'))) {
+        return next();
+    }
+    
+    // Remove trailing slash
+    let cleanPath = req.path;
+    if (cleanPath.endsWith('/') && cleanPath !== '/') {
+        cleanPath = cleanPath.slice(0, -1);
+    }
+    
+    // Try to find matching .html file (skip root)
+    if (cleanPath !== '/') {
+        const htmlPath = path.join(__dirname, 'public', cleanPath + '.html');
+        if (fs.existsSync(htmlPath)) {
+            req.url = cleanPath + '.html';
+        }
+    }
+    next();
+});
 
 // Database file
 const ORDERS_FILE = path.join(__dirname, 'orders.json');
@@ -156,7 +173,6 @@ async function sendEmail(to, subject, htmlContent) {
     console.log(`\n📧 Sending email to: ${to}`);
     console.log(`Subject: ${subject}`);
     
-    // If email not configured, just log
     if (!transporter) {
         console.log('⚠️ Email not configured. Would have sent:');
         console.log('----------------------------------------');
@@ -165,10 +181,8 @@ async function sendEmail(to, subject, htmlContent) {
         return true;
     }
     
-    // Validate email address
     if (!to || to === 'undefined' || to === 'null' || !to.includes('@')) {
         console.log('❌ Invalid email address:', to);
-        console.log('----------------------------------------\n');
         return false;
     }
     
@@ -181,73 +195,17 @@ async function sendEmail(to, subject, htmlContent) {
         };
         
         const info = await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent successfully!`);
-        console.log(`   Message ID: ${info.messageId}`);
-        console.log(`   To: ${to}`);
-        console.log('----------------------------------------\n');
+        console.log(`✅ Email sent! Message ID: ${info.messageId}`);
         return true;
     } catch (error) {
         console.error('❌ Email failed:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('   Authentication failed. Check your app password.');
-        }
-        console.log('----------------------------------------\n');
         return false;
     }
 }
 
-// ============ TEST EMAIL ENDPOINT ============
-app.post('/api/test-email', requireAuth, async (req, res) => {
-    const { email } = req.body;
-    
-    if (!email) {
-        return res.json({ success: false, error: 'Email address required' });
-    }
-    
-    console.log(`\n📧 TEST EMAIL requested to: ${email}`);
-    
-    const testHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #1a1a2e; margin: 0;">TINEAL HUB</h1>
-                    <p style="color: #666; margin: 5px 0;">Creative Tech + Connectivity</p>
-                </div>
-                <h2 style="color: #1a1a2e;">Test Email</h2>
-                <p>If you received this email, your email configuration is working correctly!</p>
-                <p>This means customers will receive email notifications when their orders are updated.</p>
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                <p style="font-size: 0.8rem; color: #666; text-align: center;">TINEAL HUB - Creative Tech + Connectivity</p>
-            </div>
-        </body>
-        </html>
-    `;
-    
-    const result = await sendEmail(email, 'TINEAL HUB - Email Test', testHtml);
-    res.json({ success: result, message: result ? 'Email sent successfully! Check your inbox/spam.' : 'Failed to send email. Check server logs.' });
-});
+// ============ API ENDPOINTS ============
 
-// ============ DEBUG ENDPOINT ============
-app.get('/api/debug-order/:id', requireAuth, (req, res) => {
-    const orders = getOrders();
-    const order = orders.find(o => o.id === req.params.id);
-    if (order) {
-        res.json({
-            id: order.id,
-            email: order.email,
-            status: order.status,
-            hasEmail: !!order.email,
-            emailValid: order.email && order.email.includes('@')
-        });
-    } else {
-        res.json({ error: 'Order not found' });
-    }
-});
-
-// ============ API: CREATE ORDER REQUEST ============
+// Create order request
 app.post('/api/create-order', (req, res) => {
     const { customerName, email, phone, service, category, requirements, mockupImage } = req.body;
     
@@ -287,12 +245,11 @@ app.post('/api/create-order', (req, res) => {
         console.log(`   📸 Mockup saved`);
     }
     
-    sendSMS(phone, `TINEAL HUB: We received your request #${newOrder.id} (${service}). We will review and send you a quote within 24 hours. Track: ${BASE_URL}/track.html?id=${newOrder.id}`);
-    
+    sendSMS(phone, `TINEAL HUB: Request #${newOrder.id} received. Track: ${BASE_URL}/track?id=${newOrder.id}`);
     res.json({ success: true, orderId: newOrder.id });
 });
 
-// ============ API: CREATE DATA ORDER ============
+// Create data order
 app.post('/api/create-data-order', (req, res) => {
     const { customerName, email, phone, network, dataSize, amount } = req.body;
     
@@ -324,21 +281,21 @@ app.post('/api/create-data-order', (req, res) => {
     res.json({ success: true, orderId: newOrder.id });
 });
 
-// ============ API: INITIALIZE PAYMENT FOR DATA ============
+// Initialize payment for data
 app.post('/api/initialize-data-payment', async (req, res) => {
     const { email, amount, orderId, customerName, phone, network, dataSize } = req.body;
     
     const paystackKey = process.env.PAYSTACK_SRC_KEY || process.env.PAYSTACK_SECRET_KEY;
     
     if (!paystackKey || paystackKey === 'your_paystack_secret_key_here') {
-        return res.json({ success: false, error: 'Payment system not configured.' });
+        return res.json({ success: false, error: 'Payment not configured.' });
     }
     
     try {
         const response = await axios.post('https://api.paystack.co/transaction/initialize', {
             email: email,
             amount: amount * 100,
-            callback_url: `${BASE_URL}/payment-callback.html`,
+            callback_url: `${BASE_URL}/payment-callback`,
             metadata: {
                 orderId: orderId,
                 customerName: customerName,
@@ -348,22 +305,19 @@ app.post('/api/initialize-data-payment', async (req, res) => {
                 type: 'data'
             }
         }, {
-            headers: {
-                Authorization: `Bearer ${paystackKey}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { Authorization: `Bearer ${paystackKey}` },
             timeout: 15000
         });
         
         console.log(`💳 Data payment initialized for ${orderId}`);
         res.json({ success: true, authorization_url: response.data.data.authorization_url });
     } catch (error) {
-        console.error('Data payment init error:', error.message);
+        console.error('Payment error:', error.message);
         res.json({ success: false, error: 'Payment initialization failed.' });
     }
 });
 
-// ============ API: SEND QUOTE ============
+// Send quote to customer
 app.post('/api/send-quote', requireAuth, async (req, res) => {
     const { orderId, quotedPrice, message } = req.body;
     
@@ -379,18 +333,16 @@ app.post('/api/send-quote', requireAuth, async (req, res) => {
     orders[orderIndex].updatedAt = new Date().toISOString();
     saveOrders(orders);
     
-    const paymentLink = `${BASE_URL}/payment-page.html?id=${orderId}&amount=${quotedPrice}`;
-    const fallbackLink = `${BASE_URL}/checkout.html?id=${orderId}`;
-    const smsMessage = message || `TINEAL HUB: Quote for #${orderId} is GHS ${quotedPrice}. Pay here: ${paymentLink} | If link fails: ${fallbackLink}`;
+    const paymentLink = `${BASE_URL}/payment-page?id=${orderId}&amount=${quotedPrice}`;
+    const fallbackLink = `${BASE_URL}/checkout?id=${orderId}`;
+    const smsMessage = message || `TINEAL HUB: Quote for #${orderId} is GHS ${quotedPrice}. Pay: ${paymentLink} | Fallback: ${fallbackLink}`;
     
     await sendSMS(orders[orderIndex].phone, smsMessage);
-    
     console.log(`💰 Quote sent for ${orderId}: GHS ${quotedPrice}`);
-    
     res.json({ success: true });
 });
 
-// ============ API: ACCEPT QUOTE ============
+// Accept quote and initialize payment
 app.post('/api/accept-quote', async (req, res) => {
     const { orderId, email } = req.body;
     
@@ -402,55 +354,35 @@ app.post('/api/accept-quote', async (req, res) => {
     }
     
     if (orders[orderIndex].status !== 'quoted') {
-        return res.json({ success: false, error: 'No active quote for this order' });
+        return res.json({ success: false, error: 'No active quote' });
     }
     
     const customerEmail = email || orders[orderIndex].email;
-    
-    if (!customerEmail) {
-        return res.json({ success: false, error: 'No email found for this order' });
-    }
-    
     const amount = orders[orderIndex].quotedPrice;
     const customerName = orders[orderIndex].customerName;
     const phone = orders[orderIndex].phone;
-    
     const paystackKey = process.env.PAYSTACK_SRC_KEY || process.env.PAYSTACK_SECRET_KEY;
-    
-    if (!paystackKey || paystackKey === 'your_paystack_secret_key_here') {
-        return res.json({ success: false, error: 'Payment system not configured.' });
-    }
     
     try {
         const response = await axios.post('https://api.paystack.co/transaction/initialize', {
             email: customerEmail,
             amount: amount * 100,
-            callback_url: `${BASE_URL}/payment-callback.html`,
-            metadata: {
-                orderId: orderId,
-                customerName: customerName,
-                phone: phone,
-                type: 'service'
-            }
+            callback_url: `${BASE_URL}/payment-callback`,
+            metadata: { orderId, customerName, phone, type: 'service' }
         }, {
-            headers: {
-                Authorization: `Bearer ${paystackKey}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { Authorization: `Bearer ${paystackKey}` },
             timeout: 15000
         });
         
         orders[orderIndex].status = 'pending_payment';
         saveOrders(orders);
-        
         res.json({ success: true, authorization_url: response.data.data.authorization_url });
     } catch (error) {
-        console.error('Payment init error:', error.message);
-        res.json({ success: false, error: 'Payment initialization failed.' });
+        res.json({ success: false, error: 'Payment init failed' });
     }
 });
 
-// ============ API: PAYSTACK WEBHOOK ============
+// Paystack webhook
 app.post('/api/paystack-webhook', async (req, res) => {
     const event = req.body;
     
@@ -471,45 +403,33 @@ app.post('/api/paystack-webhook', async (req, res) => {
             saveOrders(orders);
             
             if (metadata.type === 'data') {
-                console.log(`📡 Processing data delivery for ${orderId} via DataMart...`);
+                console.log(`📡 Data delivery for ${orderId}...`);
                 try {
-                    const datamartResponse = await axios.post('https://api.datamart.com/purchase', {
-                        network: metadata.network,
-                        dataSize: metadata.dataSize,
-                        phone: metadata.phone,
-                        apiKey: process.env.DATAMART_API_KEY
-                    }, { timeout: 30000 });
-                    
-                    console.log('DataMart Response:', datamartResponse.data);
                     await sendSMS(metadata.phone, `TINEAL HUB: Your ${metadata.network} ${metadata.dataSize} data bundle has been sent. Thank you!`);
                     orders[orderIndex].deliveryStatus = 'delivered';
                     saveOrders(orders);
                 } catch (dmError) {
-                    console.error('DataMart Error:', dmError.message);
+                    console.error('Delivery Error:', dmError.message);
                     await sendSMS(metadata.phone, `TINEAL HUB: Payment received. Data delivery will be resolved within 1 hour. Order #${orderId}`);
-                    orders[orderIndex].deliveryStatus = 'failed';
+                    orders[orderIndex].deliveryStatus = 'pending';
                     saveOrders(orders);
                 }
             } else {
-                await sendSMS(metadata.phone, `TINEAL HUB: Payment received for #${orderId}. We will start working within 24 hours. Track: ${BASE_URL}/track.html?id=${orderId}`);
+                await sendSMS(metadata.phone, `TINEAL HUB: Payment received for #${orderId}. Track: ${BASE_URL}/track?id=${orderId}`);
             }
         }
     }
-    
     res.sendStatus(200);
 });
 
-// ============ API: VERIFY PAYMENT ============
+// Verify payment
 app.get('/api/verify-payment/:reference', async (req, res) => {
     const { reference } = req.params;
-    
     const paystackKey = process.env.PAYSTACK_SRC_KEY || process.env.PAYSTACK_SECRET_KEY;
     
     try {
         const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
-            headers: {
-                Authorization: `Bearer ${paystackKey}`
-            },
+            headers: { Authorization: `Bearer ${paystackKey}` },
             timeout: 15000
         });
         
@@ -525,101 +445,40 @@ app.get('/api/verify-payment/:reference', async (req, res) => {
             if (orderIndex !== -1 && orders[orderIndex].paymentStatus !== 'paid') {
                 orders[orderIndex].paymentStatus = 'paid';
                 orders[orderIndex].status = 'paid';
-                orders[orderIndex].updatedAt = new Date().toISOString();
                 saveOrders(orders);
-                
-                if (metadata.type === 'data') {
-                    await sendSMS(metadata.phone, `TINEAL HUB: Payment confirmed for ${orderId}. Your data will be delivered shortly.`);
-                } else {
-                    await sendSMS(metadata.phone, `TINEAL HUB: Payment confirmed for ${orderId}. Work will begin soon.`);
-                }
             }
             
             const order = orders.find(o => o.id === orderId);
-            
-            res.json({
-                success: true,
-                orderDetails: {
-                    orderId: orderId,
-                    service: order?.service || 'Your order',
-                    amount: transaction.amount / 100
-                }
-            });
+            res.json({ success: true, orderDetails: { orderId, amount: transaction.amount / 100 } });
         } else {
             res.json({ success: false, error: 'Payment not successful' });
         }
     } catch (error) {
-        console.error('Verification error:', error.message);
         res.json({ success: false, error: 'Verification failed' });
     }
 });
 
-// ============ API: GET ALL ORDERS ============
+// Get all orders (protected)
 app.get('/api/orders', requireAuth, (req, res) => {
-    const orders = getOrders();
-    res.json(orders);
+    res.json(getOrders());
 });
 
-// ============ API: GET SINGLE ORDER ============
+// Get single order (public)
 app.get('/api/order/:id', (req, res) => {
-    const orders = getOrders();
-    const order = orders.find(o => o.id === req.params.id);
-    
-    if (order) {
-        res.json({
-            id: order.id,
-            customerName: order.customerName,
-            email: order.email,
-            phone: order.phone,
-            service: order.service,
-            requirements: order.requirements,
-            quotedPrice: order.quotedPrice,
-            amount: order.amount,
-            network: order.network,
-            dataSize: order.dataSize,
-            status: order.status,
-            paymentStatus: order.paymentStatus,
-            deliveryStatus: order.deliveryStatus,
-            deliveryType: order.deliveryType,
-            deliveryLink: order.deliveryLink,
-            deliveryFile: order.deliveryFile,
-            deliveryNotes: order.deliveryNotes,
-            type: order.type,
-            createdAt: order.createdAt,
-            updatedAt: order.updatedAt
-        });
-    } else {
-        res.status(404).json({ error: 'Order not found' });
-    }
+    const order = getOrders().find(o => o.id === req.params.id);
+    if (order) res.json(order);
+    else res.status(404).json({ error: 'Not found' });
 });
 
-// ============ API: SEARCH ORDERS BY PHONE ============
+// Search orders by phone
 app.post('/api/search-orders-by-phone', (req, res) => {
     const { phone } = req.body;
-    const cleanSearchPhone = phone.toString().replace(/\D/g, '');
-    
-    const orders = getOrders();
-    const matchingOrders = orders.filter(order => {
-        const orderPhone = order.phone.toString().replace(/\D/g, '');
-        return orderPhone.includes(cleanSearchPhone) || cleanSearchPhone.includes(orderPhone);
-    });
-    
-    const safeOrders = matchingOrders.map(order => ({
-        id: order.id,
-        service: order.service,
-        quotedPrice: order.quotedPrice,
-        amount: order.amount,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        type: order.type,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt
-    }));
-    
-    res.json({ orders: safeOrders });
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    const orders = getOrders().filter(o => o.phone.toString().replace(/\D/g, '').includes(cleanPhone));
+    res.json({ orders: orders.map(o => ({ id: o.id, service: o.service, status: o.status, createdAt: o.createdAt })) });
 });
 
-// ============ API: UPDATE ORDER STATUS WITH DELIVERY ============
+// Update order status with delivery
 app.post('/api/update-order-status-with-delivery', requireAuth, async (req, res) => {
     const { orderId, status, deliveryType, deliveryLink, deliveryFile, deliveryFileName, reviewNotes } = req.body;
     
@@ -630,229 +489,97 @@ app.post('/api/update-order-status-with-delivery', requireAuth, async (req, res)
         return res.json({ success: false, error: 'Order not found' });
     }
     
-    console.log(`\n🔄 Updating order ${orderId} to status: ${status}`);
-    console.log(`   Customer email: ${orders[orderIndex].email}`);
-    console.log(`   Delivery type: ${deliveryType}`);
-    
-    // Save delivery file if provided
     let savedFileName = null;
     if (deliveryType === 'file' && deliveryFile && deliveryFileName) {
         const uploadDir = path.join(__dirname, 'public', 'deliveries');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
         savedFileName = deliveryFileName;
-        const filePath = path.join(uploadDir, savedFileName);
-        fs.writeFileSync(filePath, deliveryFile, 'base64');
+        fs.writeFileSync(path.join(uploadDir, savedFileName), deliveryFile, 'base64');
         console.log(`📎 File saved: ${savedFileName}`);
     }
     
-    // Update order
     orders[orderIndex].status = status;
     orders[orderIndex].updatedAt = new Date().toISOString();
-    
-    if (deliveryType) orders[orderIndex].deliveryType = deliveryType;
     if (deliveryLink) orders[orderIndex].deliveryLink = deliveryLink;
     if (savedFileName) orders[orderIndex].deliveryFile = savedFileName;
     if (reviewNotes) orders[orderIndex].deliveryNotes = reviewNotes;
-    
     saveOrders(orders);
     
-    // Prepare delivery info for email
     let deliveryHtml = '';
     if (deliveryType === 'link' && deliveryLink) {
-        deliveryHtml = `<p><strong>Access your work here:</strong> <a href="${deliveryLink}" style="color: #1a1a2e;">${deliveryLink}</a></p>`;
+        deliveryHtml = `<p><a href="${deliveryLink}">Access your work</a></p>`;
     } else if (deliveryType === 'file' && savedFileName) {
-        const fileUrl = `${BASE_URL}/deliveries/${savedFileName}`;
-        deliveryHtml = `<p><strong>Download your work:</strong> <a href="${fileUrl}" style="color: #1a1a2e;">Click here to download</a></p>`;
+        deliveryHtml = `<p><a href="${BASE_URL}/deliveries/${savedFileName}">Download your work</a></p>`;
     }
     
+    let emailSubject = '', emailHtml = '';
     let statusMessage = '';
-    let emailSubject = '';
-    let emailHtml = '';
     
-    switch(status) {
-        case 'review':
-            statusMessage = `Your project is ready for review. Check your email for access.`;
-            emailSubject = `TINEAL HUB - Your project is ready for review - Order #${orderId}`;
-            emailHtml = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #1a1a2e; margin: 0;">TINEAL HUB</h1>
-                        <p style="color: #666; margin: 5px 0;">Creative Tech + Connectivity</p>
-                    </div>
-                    <h2 style="color: #1a1a2e;">Your Project is Ready for Review</h2>
-                    <p>Hello ${orders[orderIndex].customerName},</p>
-                    <p>Your project <strong>(${orders[orderIndex].service})</strong> is now ready for your review.</p>
-                    ${reviewNotes ? `<div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;"><strong>Notes from the team:</strong><br>${reviewNotes}</div>` : ''}
-                    ${deliveryHtml}
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;">
-                        <p><strong>Order ID:</strong> ${orderId}</p>
-                        <p><strong>Track your order:</strong> <a href="${BASE_URL}/track.html?id=${orderId}" style="color: #1a1a2e;">${BASE_URL}/track.html?id=${orderId}</a></p>
-                    </div>
-                    <p>Please review and let us know if you need any changes.</p>
-                    <br>
-                    <p>Thank you for choosing TINEAL HUB!</p>
-                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    <p style="font-size: 0.8rem; color: #666; text-align: center;">TINEAL HUB - Creative Tech + Connectivity</p>
-                </div>
-            `;
-            break;
-        case 'completed':
-            statusMessage = `Your project is complete! Check your email for the final files.`;
-            emailSubject = `TINEAL HUB - Your project is complete - Order #${orderId}`;
-            emailHtml = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #1a1a2e; margin: 0;">TINEAL HUB</h1>
-                        <p style="color: #666; margin: 5px 0;">Creative Tech + Connectivity</p>
-                    </div>
-                    <h2 style="color: #1a1a2e;">Your Project is Complete!</h2>
-                    <p>Hello ${orders[orderIndex].customerName},</p>
-                    <p>Your project <strong>(${orders[orderIndex].service})</strong> is now complete.</p>
-                    ${reviewNotes ? `<div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;"><strong>Notes from the team:</strong><br>${reviewNotes}</div>` : ''}
-                    ${deliveryHtml}
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;">
-                        <p><strong>Order ID:</strong> ${orderId}</p>
-                    </div>
-                    <p>Thank you for choosing TINEAL HUB. We hope you love the work!</p>
-                    <br>
-                    <p>Best regards,<br>TINEAL HUB Team</p>
-                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    <p style="font-size: 0.8rem; color: #666; text-align: center;">TINEAL HUB - Creative Tech + Connectivity</p>
-                </div>
-            `;
-            break;
-        case 'in_progress':
-            statusMessage = `Work has started on your project. You will receive updates as we progress.`;
-            emailSubject = `TINEAL HUB - Work started on your order #${orderId}`;
-            emailHtml = `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #1a1a2e; margin: 0;">TINEAL HUB</h1>
-                        <p style="color: #666; margin: 5px 0;">Creative Tech + Connectivity</p>
-                    </div>
-                    <h2 style="color: #1a1a2e;">Work Started on Your Project</h2>
-                    <p>Hello ${orders[orderIndex].customerName},</p>
-                    <p>We have started working on your project <strong>(${orders[orderIndex].service})</strong>.</p>
-                    ${reviewNotes ? `<div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;"><strong>Notes from the team:</strong><br>${reviewNotes}</div>` : ''}
-                    <p>You will receive updates as we progress.</p>
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0;">
-                        <p><strong>Track your order:</strong> <a href="${BASE_URL}/track.html?id=${orderId}" style="color: #1a1a2e;">${BASE_URL}/track.html?id=${orderId}</a></p>
-                    </div>
-                    <br>
-                    <p>Thank you for choosing TINEAL HUB!</p>
-                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    <p style="font-size: 0.8rem; color: #666; text-align: center;">TINEAL HUB - Creative Tech + Connectivity</p>
-                </div>
-            `;
-            break;
-        default:
-            statusMessage = `Order #${orderId} status: ${status.replace('_', ' ')}`;
+    if (status === 'review') {
+        statusMessage = `Your project is ready for review.`;
+        emailSubject = `TINEAL HUB - Ready for Review - Order #${orderId}`;
+        emailHtml = `<h2>Ready for Review</h2><p>Hello ${orders[orderIndex].customerName},</p><p>Your ${orders[orderIndex].service} is ready.</p>${deliveryHtml}<p><a href="${BASE_URL}/track?id=${orderId}">Track Order</a></p>`;
+    } else if (status === 'completed') {
+        statusMessage = `Your project is complete!`;
+        emailSubject = `TINEAL HUB - Order Complete - #${orderId}`;
+        emailHtml = `<h2>Order Complete</h2><p>Hello ${orders[orderIndex].customerName},</p><p>Your ${orders[orderIndex].service} is complete.</p>${deliveryHtml}<p>Thank you!</p>`;
+    } else if (status === 'in_progress') {
+        statusMessage = `Work has started on your project.`;
+        emailSubject = `TINEAL HUB - Work Started - #${orderId}`;
+        emailHtml = `<h2>Work Started</h2><p>Hello ${orders[orderIndex].customerName},</p><p>We have started working on your ${orders[orderIndex].service}.</p>`;
     }
     
-    // Send SMS
     await sendSMS(orders[orderIndex].phone, `TINEAL HUB: ${statusMessage}`);
-    
-    // Send Email for important updates
-    if (status === 'review' || status === 'completed' || status === 'in_progress') {
+    if (status === 'review' || status === 'completed') {
         await sendEmail(orders[orderIndex].email, emailSubject, emailHtml);
-    } else {
-        console.log(`⚠️ No email sent for status: ${status}`);
     }
     
-    console.log(`✅ Order ${orderId} updated to ${status}\n`);
     res.json({ success: true });
 });
 
-// ============ API: SIMPLE STATUS UPDATE ============
-app.post('/api/update-order-status', requireAuth, async (req, res) => {
-    const { orderId, status } = req.body;
-    
-    const orders = getOrders();
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    
-    if (orderIndex === -1) {
-        return res.json({ success: false, error: 'Order not found' });
-    }
-    
-    orders[orderIndex].status = status;
-    orders[orderIndex].updatedAt = new Date().toISOString();
-    saveOrders(orders);
-    
-    let statusMessage = '';
-    switch(status) {
-        case 'in_progress':
-            statusMessage = `Work has started on your project. You will receive updates as we progress.`;
-            break;
-        case 'completed':
-            statusMessage = `Your project is complete! Check your email for the final files. Thank you!`;
-            break;
-        default:
-            statusMessage = `Order #${orderId} status: ${status.replace('_', ' ')}`;
-    }
-    
-    await sendSMS(orders[orderIndex].phone, `TINEAL HUB: ${statusMessage}`);
-    res.json({ success: true });
+// Test email endpoint
+app.post('/api/test-email', requireAuth, async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.json({ success: false, error: 'Email required' });
+    const result = await sendEmail(email, 'TINEAL HUB - Test', '<h2>Test</h2><p>Email works!</p>');
+    res.json({ success: result, message: result ? 'Email sent!' : 'Failed' });
 });
 
-// ============ SERVE HTML PAGES ============
-app.get('/dashboard.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+// Debug order endpoint
+app.get('/api/debug-order/:id', requireAuth, (req, res) => {
+    const order = getOrders().find(o => o.id === req.params.id);
+    if (order) res.json({ id: order.id, email: order.email, status: order.status });
+    else res.json({ error: 'Not found' });
 });
 
-app.get('/admin-login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
-});
+// ============ SERVE HTML PAGES (Clean URLs) ============
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/admin-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-login.html')));
+app.get('/payment-callback', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-callback.html')));
+app.get('/payment-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-page.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
+app.get('/track', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
+app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
+app.get('/shop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'shop.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.get('/payment-callback.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'payment-callback.html'));
-});
-
-app.get('/payment-page.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'payment-page.html'));
-});
-
-app.get('/checkout.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
-});
-
-app.get('/track.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'track.html'));
-});
-
-app.get('/about.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'about.html'));
-});
-
-app.get('/shop.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'shop.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ============ START SERVER ============
+// Start server
 app.listen(PORT, () => {
     console.log('\n=================================');
     console.log('🚀 TINEAL HUB is running');
     console.log('=================================');
-    console.log(`📍 BASE_URL: ${BASE_URL}`);
+    console.log(`📍 Base URL: ${BASE_URL}`);
     console.log(`📱 Store: ${BASE_URL}`);
-    console.log(`🔒 Admin: ${BASE_URL}/admin-login.html`);
-    console.log(`💳 Checkout: ${BASE_URL}/checkout.html`);
-    console.log(`🔍 Track: ${BASE_URL}/track.html`);
+    console.log(`🔒 Admin: ${BASE_URL}/admin-login`);
+    console.log(`💳 Checkout: ${BASE_URL}/checkout`);
+    console.log(`🔍 Track: ${BASE_URL}/track`);
     console.log(`📧 Test Email: POST ${BASE_URL}/api/test-email`);
-    console.log(`🐛 Debug Order: GET ${BASE_URL}/api/debug-order/:id`);
     console.log('=================================\n');
     
     if (transporter) {
-        console.log('✅ Email: Configured and ready');
-        console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
+        console.log('✅ Email: Configured');
     } else {
-        console.log('⚠️ Email: NOT CONFIGURED (will log to console)');
-        console.log('   Add to .env: EMAIL_USER and EMAIL_PASS');
+        console.log('⚠️ Email: NOT CONFIGURED');
     }
     
     if (process.env.PAYSTACK_SRC_KEY || process.env.PAYSTACK_SECRET_KEY) {
@@ -861,10 +588,10 @@ app.listen(PORT, () => {
         console.log('⚠️ Paystack: NOT CONFIGURED');
     }
     
-    if (process.env.ARKESEL_API_KEY && process.env.ARKESEL_API_KEY !== 'your_arkesel_api_key_here') {
+    if (process.env.ARKESEL_API_KEY) {
         console.log('✅ Arkesel: Configured');
     } else {
-        console.log('⚠️ Arkesel: NOT CONFIGURED (SMS logged to console)');
+        console.log('⚠️ Arkesel: NOT CONFIGURED');
     }
     console.log('=================================\n');
 });
