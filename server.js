@@ -58,28 +58,24 @@ app.use(express.static('public'));
 // Serve delivery files
 app.use('/deliveries', express.static(path.join(__dirname, 'public', 'deliveries')));
 
-// ============ URL REWRITING (Hide .html extensions) ============
-app.use((req, res, next) => {
-    // Skip API routes and static assets with extensions
-    if (req.path.startsWith('/api/') || (req.path.includes('.') && !req.path.endsWith('.html'))) {
-        return next();
-    }
-    
-    // Remove trailing slash
-    let cleanPath = req.path;
-    if (cleanPath.endsWith('/') && cleanPath !== '/') {
-        cleanPath = cleanPath.slice(0, -1);
-    }
-    
-    // Try to find matching .html file (skip root)
-    if (cleanPath !== '/') {
-        const htmlPath = path.join(__dirname, 'public', cleanPath + '.html');
-        if (fs.existsSync(htmlPath)) {
-            req.url = cleanPath + '.html';
-        }
-    }
-    next();
-});
+// ============ DIRECT ROUTES (No .html extension needed) ============
+app.get('/shop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'shop.html')));
+app.get('/track', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
+app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
+app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/admin-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-login.html')));
+app.get('/payment-callback', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-callback.html')));
+app.get('/payment-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-page.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// Also keep .html extensions working for backward compatibility
+app.get('/shop.html', (req, res) => res.redirect('/shop'));
+app.get('/track.html', (req, res) => res.redirect('/track'));
+app.get('/checkout.html', (req, res) => res.redirect('/checkout'));
+app.get('/about.html', (req, res) => res.redirect('/about'));
+app.get('/dashboard.html', (req, res) => res.redirect('/dashboard'));
+app.get('/admin-login.html', (req, res) => res.redirect('/admin-login'));
 
 // Database file
 const ORDERS_FILE = path.join(__dirname, 'orders.json');
@@ -403,13 +399,13 @@ app.post('/api/paystack-webhook', async (req, res) => {
             saveOrders(orders);
             
             if (metadata.type === 'data') {
-                console.log(`📡 Data delivery for ${orderId}...`);
+                console.log(`📡 DataMart delivery for ${orderId}...`);
                 try {
-                    await sendSMS(metadata.phone, `TINEAL HUB: Your ${metadata.network} ${metadata.dataSize} data bundle has been sent. Thank you!`);
+                    await sendSMS(metadata.phone, `TINEAL HUB: Your ${metadata.network} ${metadata.dataSize} data bundle will be delivered shortly. Thank you!`);
                     orders[orderIndex].deliveryStatus = 'delivered';
                     saveOrders(orders);
                 } catch (dmError) {
-                    console.error('Delivery Error:', dmError.message);
+                    console.error('DataMart Error:', dmError.message);
                     await sendSMS(metadata.phone, `TINEAL HUB: Payment received. Data delivery will be resolved within 1 hour. Order #${orderId}`);
                     orders[orderIndex].deliveryStatus = 'pending';
                     saveOrders(orders);
@@ -552,18 +548,7 @@ app.get('/api/debug-order/:id', requireAuth, (req, res) => {
     else res.json({ error: 'Not found' });
 });
 
-// ============ SERVE HTML PAGES (Clean URLs) ============
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/admin-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin-login.html')));
-app.get('/payment-callback', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-callback.html')));
-app.get('/payment-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'payment-page.html')));
-app.get('/checkout', (req, res) => res.sendFile(path.join(__dirname, 'public', 'checkout.html')));
-app.get('/track', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
-app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
-app.get('/shop', (req, res) => res.sendFile(path.join(__dirname, 'public', 'shop.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
-// Start server
+// ============ START SERVER ============
 app.listen(PORT, () => {
     console.log('\n=================================');
     console.log('🚀 TINEAL HUB is running');
@@ -573,7 +558,8 @@ app.listen(PORT, () => {
     console.log(`🔒 Admin: ${BASE_URL}/admin-login`);
     console.log(`💳 Checkout: ${BASE_URL}/checkout`);
     console.log(`🔍 Track: ${BASE_URL}/track`);
-    console.log(`📧 Test Email: POST ${BASE_URL}/api/test-email`);
+    console.log(`🛍️ Shop: ${BASE_URL}/shop`);
+    console.log(`ℹ️ About: ${BASE_URL}/about`);
     console.log('=================================\n');
     
     if (transporter) {
